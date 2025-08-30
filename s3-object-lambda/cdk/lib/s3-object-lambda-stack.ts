@@ -8,7 +8,7 @@ import * as s3ObjectLambda from "aws-cdk-lib/aws-s3objectlambda";
 import { Construct } from "constructs";
 import * as path from "path";
 
-export class CdkStack extends cdk.Stack {
+export class S3ObjectLambdaStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
     super(scope, id, props);
 
