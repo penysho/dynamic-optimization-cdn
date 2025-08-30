@@ -12,6 +12,8 @@ export class S3ObjectLambdaStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
     super(scope, id, props);
 
+    // https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/DownloadDistS3AndCustomOrigins.html#using-S3-Object-Lambda
+
     // S3 bucket to store original images
     const originalImagesBucket = new s3.Bucket(this, "OriginalImagesBucket", {
       removalPolicy: cdk.RemovalPolicy.DESTROY,
@@ -24,6 +26,30 @@ export class S3ObjectLambdaStack extends cdk.Stack {
           abortIncompleteMultipartUploadAfter: cdk.Duration.days(1),
         },
       ],
+    });
+
+    // S3 Bucket Policy
+    new s3.CfnBucketPolicy(this, "BucketPolicy", {
+      bucket: originalImagesBucket.bucketName,
+      policyDocument: {
+        Version: "2012-10-17",
+        Statement: [
+          {
+            Effect: "Allow",
+            Principal: { AWS: "*" },
+            Action: ["s3:GetObject"],
+            Resource: [
+              `arn:aws:s3:::${originalImagesBucket.bucketName}`,
+              `arn:aws:s3:::${originalImagesBucket.bucketName}/*`,
+            ],
+            Condition: {
+              StringEquals: {
+                "s3:DataAccessPointAccount": props?.env?.account,
+              },
+            },
+          },
+        ],
+      },
     });
 
     // Lambda function for image processing
@@ -60,7 +86,27 @@ export class S3ObjectLambdaStack extends cdk.Stack {
       "OriginalImagesAccessPoint",
       {
         bucket: originalImagesBucket.bucketName,
-        name: "original-images-ap",
+        name: "from-cloudfront-ap",
+        policy: {
+          Version: "2012-10-17",
+          Statement: [
+            {
+              Sid: "FromCloudFront",
+              Effect: "Allow",
+              Principal: { Service: "cloudfront.amazonaws.com" },
+              Action: ["s3:*"],
+              Resource: [
+                `arn:aws:s3:${props?.env?.region}:${props?.env?.account}:accesspoint/from-cloudfront-ap`,
+                `arn:aws:s3:${props?.env?.region}:${props?.env?.account}:accesspoint/from-cloudfront-ap/object/*`,
+              ],
+              Condition: {
+                "ForAnyValue:StringEquals": {
+                  "aws:CalledVia": "s3-object-lambda.amazonaws.com",
+                },
+              },
+            },
+          ],
+        },
       }
     );
 
@@ -76,8 +122,8 @@ export class S3ObjectLambdaStack extends cdk.Stack {
             {
               actions: ["GetObject"],
               contentTransformation: {
-                awsLambda: {
-                  functionArn: imageProcessingLambda.functionArn,
+                AwsLambda: {
+                  FunctionArn: imageProcessingLambda.functionArn,
                 },
               },
             },
@@ -96,7 +142,6 @@ export class S3ObjectLambdaStack extends cdk.Stack {
       this,
       "ObjectLambdaOriginRequestPolicy",
       {
-        originRequestPolicyName: "ObjectLambdaOriginRequestPolicy",
         comment: "Policy for S3 Object Lambda origin",
         headerBehavior: cloudfront.OriginRequestHeaderBehavior.allowList(
           "CloudFront-Viewer-Country"
@@ -111,7 +156,6 @@ export class S3ObjectLambdaStack extends cdk.Stack {
       this,
       "ObjectLambdaCachePolicy",
       {
-        cachePolicyName: "ObjectLambdaCachePolicy",
         comment: "Cache policy for dynamic image processing",
         defaultTtl: cdk.Duration.hours(24),
         maxTtl: cdk.Duration.days(7),
@@ -150,6 +194,43 @@ export class S3ObjectLambdaStack extends cdk.Stack {
         },
         priceClass: cloudfront.PriceClass.PRICE_CLASS_100,
         comment: "Dynamic Image Optimization CDN with S3 Object Lambda",
+      }
+    );
+
+    // Grant CloudFront permission to invoke the Lambda function
+    imageProcessingLambda.grantInvoke(
+      new iam.ServicePrincipal("cloudfront.amazonaws.com")
+    );
+
+    // Add specific permission for CloudFront distribution
+    imageProcessingLambda.addPermission("CloudFrontInvokePermission", {
+      principal: new iam.ServicePrincipal("cloudfront.amazonaws.com"),
+      action: "lambda:InvokeFunction",
+      sourceArn: `arn:aws:cloudfront::${props?.env?.account}:distribution/${distribution.distributionId}`,
+    });
+
+    // S3 Object Lambda Access Point Policy
+    new s3ObjectLambda.CfnAccessPointPolicy(
+      this,
+      "ObjectLambdaAccessPointPolicy",
+      {
+        objectLambdaAccessPoint: objectLambdaAccessPoint.ref,
+        policyDocument: {
+          Version: "2012-10-17",
+          Statement: [
+            {
+              Effect: "Allow",
+              Principal: { Service: "cloudfront.amazonaws.com" },
+              Action: ["s3-object-lambda:Get*"],
+              Resource: `arn:aws:s3-object-lambda:${props?.env?.region}:${props?.env?.account}:accesspoint/${objectLambdaAccessPoint.ref}`,
+              Condition: {
+                StringEquals: {
+                  "aws:SourceArn": `arn:aws:cloudfront::${props?.env?.account}:distribution/${distribution.distributionId}`,
+                },
+              },
+            },
+          ],
+        },
       }
     );
 
