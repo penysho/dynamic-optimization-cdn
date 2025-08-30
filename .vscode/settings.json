@@ -43,24 +43,24 @@
     "editor.tabSize": 2,
     "editor.formatOnSave": true,
     // 以下、Prettier用設定
-    // "editor.codeActionsOnSave": {
-    //   // import漏れの追加
-    //   // ライブラリで実現不可能なためこちらで定義、ESlint由来かつTypeScript専用
-    //   // こちらを定義しても、Next.jsの一部のコンポーネントがimportできない
-    //   "source.addMissingImports": "explicit",
-    //   // importの並び替えと不要なimportの削除、eslint-plugin-importとeslint-plugin-unused-importsで実施する方針
-    //   // 一部不要なimportの削除が効かない場合があるため有効化する
-    //   "source.organizeImports": "explicit",
-    //   "source.fixAll.eslint": "explicit",
-    //   "source.fixAll.stylelint": "explicit"
-    // },
+    "editor.codeActionsOnSave": {
+      // import漏れの追加
+      // ライブラリで実現不可能なためこちらで定義、ESlint由来かつTypeScript専用
+      // こちらを定義しても、Next.jsの一部のコンポーネントがimportできない
+      "source.addMissingImports": "explicit",
+      // importの並び替えと不要なimportの削除、eslint-plugin-importとeslint-plugin-unused-importsで実施する方針
+      // 一部不要なimportの削除が効かない場合があるため有効化する
+      "source.organizeImports": "explicit",
+      "source.fixAll.eslint": "explicit",
+      "source.fixAll.stylelint": "explicit"
+    }
     // 以下、Biome用設定
     // https://biomejs.dev/ja/reference/vscode/
-    "editor.defaultFormatter": "biomejs.biome",
-    "editor.codeActionsOnSave": {
-      "source.fixAll.biome": "explicit",
-      "source.organizeImports.biome": "explicit"
-    }
+    // "editor.defaultFormatter": "biomejs.biome",
+    // "editor.codeActionsOnSave": {
+    //   "source.fixAll.biome": "explicit",
+    //   "source.organizeImports.biome": "explicit"
+    // }
   },
 
   "eslint.format.enable": false,
