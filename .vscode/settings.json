@@ -126,7 +126,7 @@
     }
   },
   "cursorpyright.analysis.extraPaths": [
-    "/usr/local/lib/python3.12/site-packages",
-    "scripts/.venv/lib/python3.12/site-packages"
+    "/usr/local/lib/python3.11/site-packages",
+    "s3-object-lambda/lambda/.venv/lib/python3.11/site-packages"
   ]
 }
