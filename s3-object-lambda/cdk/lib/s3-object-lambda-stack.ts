@@ -1,6 +1,5 @@
 import * as cdk from "aws-cdk-lib";
 import * as cloudfront from "aws-cdk-lib/aws-cloudfront";
-import * as origins from "aws-cdk-lib/aws-cloudfront-origins";
 import * as iam from "aws-cdk-lib/aws-iam";
 import * as lambda from "aws-cdk-lib/aws-lambda";
 import * as s3 from "aws-cdk-lib/aws-s3";
@@ -26,30 +25,6 @@ export class S3ObjectLambdaStack extends cdk.Stack {
           abortIncompleteMultipartUploadAfter: cdk.Duration.days(1),
         },
       ],
-    });
-
-    // S3 Bucket Policy
-    new s3.CfnBucketPolicy(this, "BucketPolicy", {
-      bucket: originalImagesBucket.bucketName,
-      policyDocument: {
-        Version: "2012-10-17",
-        Statement: [
-          {
-            Effect: "Allow",
-            Principal: { AWS: "*" },
-            Action: ["s3:GetObject"],
-            Resource: [
-              `arn:aws:s3:::${originalImagesBucket.bucketName}`,
-              `arn:aws:s3:::${originalImagesBucket.bucketName}/*`,
-            ],
-            Condition: {
-              StringEquals: {
-                "s3:DataAccessPointAccount": props?.env?.account,
-              },
-            },
-          },
-        ],
-      },
     });
 
     // Lambda function for image processing
@@ -175,27 +150,88 @@ export class S3ObjectLambdaStack extends cdk.Stack {
       }
     );
 
+    // Origin Access Control (OAC)
+    const originAccessControl = new cloudfront.CfnOriginAccessControl(
+      this,
+      "OriginAccessControl",
+      {
+        originAccessControlConfig: {
+          name: "s3-object-lambda-oac",
+          description: "Origin Access Control for S3 Object Lambda",
+          originAccessControlOriginType: "s3",
+          signingBehavior: "always",
+          signingProtocol: "sigv4",
+        },
+      }
+    );
+
     // CloudFront Distribution
-    const distribution = new cloudfront.Distribution(
+    // Configuring aliases for Object Lambda access points and OAC settings is not possible in L2.
+    const distribution = new cloudfront.CfnDistribution(
       this,
       "ImageCDNDistribution",
       {
-        defaultBehavior: {
-          origin: new origins.HttpOrigin(
-            `${
-              objectLambdaAccessPoint.attrArn.split(":")[5]
-            }.s3-object-lambda.${cdk.Aws.REGION}.amazonaws.com`
-          ),
-          allowedMethods: cloudfront.AllowedMethods.ALLOW_GET_HEAD,
-          viewerProtocolPolicy:
-            cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
-          cachePolicy: cachePolicy,
-          originRequestPolicy: originRequestPolicy,
+        distributionConfig: {
+          comment: "Dynamic Image Optimization CDN with S3 Object Lambda",
+          enabled: true,
+          priceClass: "PriceClass_100",
+          defaultCacheBehavior: {
+            targetOriginId: "S3Origin",
+            viewerProtocolPolicy: "redirect-to-https",
+            allowedMethods: ["GET", "HEAD"],
+            cachePolicyId: cachePolicy.cachePolicyId,
+            originRequestPolicyId: originRequestPolicy.originRequestPolicyId,
+            compress: true,
+          },
+          origins: [
+            {
+              id: "S3Origin",
+              domainName: `${objectLambdaAccessPoint.attrAliasValue}.s3.${props?.env?.region}.amazonaws.com`,
+              originAccessControlId: originAccessControl.attrId,
+              s3OriginConfig: {
+                originAccessIdentity: "",
+              },
+            },
+          ],
         },
-        priceClass: cloudfront.PriceClass.PRICE_CLASS_100,
-        comment: "Dynamic Image Optimization CDN with S3 Object Lambda",
       }
     );
+
+    // S3 Bucket Policy
+    new s3.CfnBucketPolicy(this, "BucketPolicy", {
+      bucket: originalImagesBucket.bucketName,
+      policyDocument: {
+        Version: "2012-10-17",
+        Statement: [
+          {
+            Sid: "AllowCloudFrontServicePrincipalReadOnly",
+            Effect: "Allow",
+            Principal: { Service: "cloudfront.amazonaws.com" },
+            Action: ["s3:GetObject"],
+            Resource: `arn:aws:s3:::${originalImagesBucket.bucketName}/*`,
+            Condition: {
+              StringEquals: {
+                "AWS:SourceArn": `arn:aws:cloudfront::${props?.env?.account}:distribution/${distribution.ref}`,
+              },
+            },
+          },
+          {
+            Effect: "Allow",
+            Principal: { AWS: "*" },
+            Action: ["s3:GetObject"],
+            Resource: [
+              `arn:aws:s3:::${originalImagesBucket.bucketName}`,
+              `arn:aws:s3:::${originalImagesBucket.bucketName}/*`,
+            ],
+            Condition: {
+              StringEquals: {
+                "s3:DataAccessPointAccount": props?.env?.account,
+              },
+            },
+          },
+        ],
+      },
+    });
 
     // Grant CloudFront permission to invoke the Lambda function
     imageProcessingLambda.grantInvoke(
@@ -206,7 +242,7 @@ export class S3ObjectLambdaStack extends cdk.Stack {
     imageProcessingLambda.addPermission("CloudFrontInvokePermission", {
       principal: new iam.ServicePrincipal("cloudfront.amazonaws.com"),
       action: "lambda:InvokeFunction",
-      sourceArn: `arn:aws:cloudfront::${props?.env?.account}:distribution/${distribution.distributionId}`,
+      sourceArn: `arn:aws:cloudfront::${props?.env?.account}:distribution/${distribution.ref}`,
     });
 
     // S3 Object Lambda Access Point Policy
@@ -225,7 +261,7 @@ export class S3ObjectLambdaStack extends cdk.Stack {
               Resource: `arn:aws:s3-object-lambda:${props?.env?.region}:${props?.env?.account}:accesspoint/${objectLambdaAccessPoint.ref}`,
               Condition: {
                 StringEquals: {
-                  "aws:SourceArn": `arn:aws:cloudfront::${props?.env?.account}:distribution/${distribution.distributionId}`,
+                  "aws:SourceArn": `arn:aws:cloudfront::${props?.env?.account}:distribution/${distribution.ref}`,
                 },
               },
             },
@@ -241,12 +277,12 @@ export class S3ObjectLambdaStack extends cdk.Stack {
     });
 
     new cdk.CfnOutput(this, "DistributionDomainName", {
-      value: distribution.distributionDomainName,
+      value: distribution.attrDomainName,
       description: "CloudFront distribution domain name",
     });
 
     new cdk.CfnOutput(this, "DistributionId", {
-      value: distribution.distributionId,
+      value: distribution.ref,
       description: "CloudFront distribution ID",
     });
 
