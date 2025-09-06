@@ -43,6 +43,12 @@ export interface ApiGatewayStackProps extends cdk.StackProps {
   enableContentModeration?: boolean;
 
   /**
+   * Enable automatic WebP conversion based on Accept headers
+   * @default false
+   */
+  enableAutoWebP?: boolean;
+
+  /**
    * Lambda memory size in MB
    * @default 1024
    */
@@ -95,6 +101,7 @@ export class ApiGatewayStack extends cdk.Stack {
       deployDemoUi = false,
       enableSmartCrop = false,
       enableContentModeration = false,
+      enableAutoWebP = false,
       lambdaMemorySize = 1024,
       lambdaTimeout = 30,
       priceClass = cloudfront.PriceClass.PRICE_CLASS_100,
@@ -192,7 +199,7 @@ export class ApiGatewayStack extends cdk.Stack {
           path.join(__dirname, "../lambda/image-transform")
         ),
         memorySize: lambdaMemorySize,
-        timeout: cdk.Duration.seconds(lambdaTimeout),
+        timeout: cdk.Duration.seconds(Math.min(lambdaTimeout, 29)),
         layers: [sharpLayer],
         environment: {
           ENABLE_SIGNATURE: enableSignature.toString(),
@@ -200,6 +207,7 @@ export class ApiGatewayStack extends cdk.Stack {
           IMAGE_BUCKET: imageBucketName || "",
           ENABLE_SMART_CROP: enableSmartCrop.toString(),
           ENABLE_CONTENT_MODERATION: enableContentModeration.toString(),
+          AUTO_WEBP: enableAutoWebP.toString(),
           LOG_LEVEL: "INFO",
         },
         logGroup: new logs.LogGroup(this, "ImageTransformFunctionLogGroup", {
@@ -292,6 +300,23 @@ export class ApiGatewayStack extends cdk.Stack {
 
     keyResource.addMethod("GET", lambdaIntegration);
 
+    // Create CloudFront Function for request modification
+    const requestModifierFunction = new cloudfront.Function(
+      this,
+      "RequestModifierFunction",
+      {
+        functionName: `${this.stackName}-request-modifier`,
+        comment: "Modifies viewer requests for image transformation",
+        code: cloudfront.FunctionCode.fromFile({
+          filePath: path.join(
+            __dirname,
+            "../cloudfront-functions/request-modifier.js"
+          ),
+        }),
+        runtime: cloudfront.FunctionRuntime.JS_2_0,
+      }
+    );
+
     // Create CloudFront distribution
     this.distribution = new cloudfront.Distribution(
       this,
@@ -324,11 +349,39 @@ export class ApiGatewayStack extends cdk.Stack {
               cookieBehavior: cloudfront.OriginRequestCookieBehavior.none(),
             }
           ),
+          functionAssociations: [
+            {
+              eventType: cloudfront.FunctionEventType.VIEWER_REQUEST,
+              function: requestModifierFunction,
+            },
+          ],
         },
         priceClass,
         logBucket: this.logsBucket,
         logFilePrefix: "cloudfront-logs/",
         comment: "CloudFront distribution for dynamic image transformation",
+        errorResponses: [
+          {
+            httpStatus: 500,
+            ttl: cdk.Duration.seconds(600),
+          },
+          {
+            httpStatus: 501,
+            ttl: cdk.Duration.seconds(600),
+          },
+          {
+            httpStatus: 502,
+            ttl: cdk.Duration.seconds(600),
+          },
+          {
+            httpStatus: 503,
+            ttl: cdk.Duration.seconds(600),
+          },
+          {
+            httpStatus: 504,
+            ttl: cdk.Duration.seconds(600),
+          },
+        ],
       }
     );
 

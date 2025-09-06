@@ -17,6 +17,9 @@ const enableSmartCrop =
 const enableContentModeration =
   app.node.tryGetContext("enableContentModeration") === "true" ||
   process.env.ENABLE_CONTENT_MODERATION === "true";
+const enableAutoWebP =
+  app.node.tryGetContext("enableAutoWebP") === "true" ||
+  process.env.ENABLE_AUTO_WEBP === "true";
 const createImageBucket =
   app.node.tryGetContext("createImageBucket") === "true" ||
   process.env.CREATE_IMAGE_BUCKET === "true";
@@ -42,6 +45,7 @@ new ApiGatewayStack(app, "DynamicImageTransformationStack", {
   deployDemoUi,
   enableSmartCrop,
   enableContentModeration,
+  enableAutoWebP,
   createImageBucket,
   deploySampleImages,
   existingImageBucketName,

@@ -5,7 +5,8 @@ This project implements a dynamic image transformation solution using Amazon API
 ## Architecture Overview
 
 The solution uses the following AWS services:
-- **Amazon CloudFront**: CDN for caching transformed images
+- **Amazon CloudFront**: CDN for caching transformed images with edge-side request optimization
+- **CloudFront Functions**: Lightweight JavaScript functions for request/response modification at the edge
 - **Amazon API Gateway**: REST API endpoint for image requests
 - **AWS Lambda**: Serverless function for image transformation using Sharp
 - **Amazon S3**: Storage for original images and logs
@@ -15,10 +16,13 @@ The solution uses the following AWS services:
 ## Key Features
 
 1. **Dynamic Image Transformation**: Resize, crop, format conversion, quality adjustment
-2. **Caching**: CloudFront caching reduces processing costs and latency
-3. **Security**: Optional signature validation for request authentication
-4. **Extensibility**: Modular design allows easy addition of new transformation features
-5. **Monitoring**: CloudWatch integration for logs and metrics
+2. **CloudFront Function Integration**: Request optimization at the edge for better performance
+3. **Auto WebP Conversion**: Automatic WebP format conversion based on Accept headers
+4. **Caching**: CloudFront caching with optimized error response handling
+5. **Security**: Optional signature validation for request authentication
+6. **Smart Features**: Optional smart cropping and content moderation using Amazon Rekognition
+7. **Extensibility**: Modular design allows easy addition of new transformation features
+8. **Monitoring**: CloudWatch integration for logs and metrics
 
 ## API Endpoints
 
@@ -99,6 +103,7 @@ npx cdk deploy \
 - `enableSignature`: Enable request signature validation (default: false)
 - `enableSmartCrop`: Enable face detection-based smart cropping (default: false)
 - `enableContentModeration`: Enable content moderation (default: false)
+- `enableAutoWebP`: Enable automatic WebP conversion based on Accept headers (default: false)
 - `createImageBucket`: Create a new S3 bucket for image storage (default: false)
 - `deploySampleImages`: Deploy sample images to the created bucket (default: false)
 - `existingImageBucketName`: Name of existing S3 bucket to use
