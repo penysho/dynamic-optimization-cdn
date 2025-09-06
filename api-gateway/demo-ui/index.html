@@ -1,0 +1,577 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Dynamic Image Transformation Demo</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          Oxygen, Ubuntu, Cantarell, sans-serif;
+        background-color: #f5f5f5;
+        color: #333;
+        line-height: 1.6;
+      }
+
+      .container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 20px;
+      }
+
+      header {
+        background-color: #232f3e;
+        color: white;
+        padding: 20px 0;
+        margin-bottom: 30px;
+      }
+
+      h1 {
+        font-size: 2.5rem;
+        margin-bottom: 10px;
+      }
+
+      .subtitle {
+        color: #ff9900;
+        font-size: 1.1rem;
+      }
+
+      .config-section {
+        background: white;
+        padding: 30px;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        margin-bottom: 30px;
+      }
+
+      .form-group {
+        margin-bottom: 20px;
+      }
+
+      label {
+        display: block;
+        font-weight: bold;
+        margin-bottom: 5px;
+        color: #555;
+      }
+
+      input[type="text"],
+      input[type="number"],
+      select {
+        width: 100%;
+        padding: 10px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        font-size: 16px;
+      }
+
+      input[type="checkbox"] {
+        margin-right: 10px;
+      }
+
+      .checkbox-group {
+        display: flex;
+        align-items: center;
+        margin-bottom: 10px;
+      }
+
+      .button-group {
+        display: flex;
+        gap: 10px;
+        margin-top: 20px;
+      }
+
+      button {
+        background-color: #ff9900;
+        color: white;
+        border: none;
+        padding: 12px 24px;
+        font-size: 16px;
+        font-weight: bold;
+        border-radius: 4px;
+        cursor: pointer;
+        transition: background-color 0.3s;
+      }
+
+      button:hover {
+        background-color: #e88900;
+      }
+
+      button:disabled {
+        background-color: #ccc;
+        cursor: not-allowed;
+      }
+
+      .secondary-button {
+        background-color: #232f3e;
+      }
+
+      .secondary-button:hover {
+        background-color: #1a232e;
+      }
+
+      .preview-section {
+        background: white;
+        padding: 30px;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      }
+
+      .image-container {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+        margin-top: 20px;
+      }
+
+      .image-box {
+        text-align: center;
+      }
+
+      .image-box h3 {
+        margin-bottom: 10px;
+        color: #232f3e;
+      }
+
+      .image-box img {
+        max-width: 100%;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        background: #f9f9f9;
+        min-height: 200px;
+      }
+
+      .url-display {
+        background: #f5f5f5;
+        padding: 10px;
+        border-radius: 4px;
+        font-family: monospace;
+        font-size: 12px;
+        word-break: break-all;
+        margin-top: 10px;
+      }
+
+      .error-message {
+        background-color: #fee;
+        color: #c00;
+        padding: 10px;
+        border-radius: 4px;
+        margin-top: 10px;
+        display: none;
+      }
+
+      .loading {
+        display: inline-block;
+        width: 20px;
+        height: 20px;
+        border: 3px solid #f3f3f3;
+        border-top: 3px solid #ff9900;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        margin-left: 10px;
+      }
+
+      @keyframes spin {
+        0% {
+          transform: rotate(0deg);
+        }
+        100% {
+          transform: rotate(360deg);
+        }
+      }
+
+      @media (max-width: 768px) {
+        .image-container {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div class="container">
+        <h1>Dynamic Image Transformation</h1>
+        <p class="subtitle">
+          Powered by Amazon CloudFront, API Gateway & Lambda
+        </p>
+      </div>
+    </header>
+
+    <div class="container">
+      <div class="config-section">
+        <h2>Configuration</h2>
+
+        <div class="form-group">
+          <label for="cloudfront-url">CloudFront Distribution URL</label>
+          <input
+            type="text"
+            id="cloudfront-url"
+            placeholder="https://d123456789.cloudfront.net"
+            required
+          />
+        </div>
+
+        <div class="form-group">
+          <label for="bucket">S3 Bucket Name</label>
+          <input
+            type="text"
+            id="bucket"
+            placeholder="my-image-bucket"
+            required
+          />
+        </div>
+
+        <div class="form-group">
+          <label for="key">S3 Object Key</label>
+          <input
+            type="text"
+            id="key"
+            placeholder="images/sample.jpg"
+            required
+          />
+        </div>
+
+        <h3 style="margin-top: 30px; margin-bottom: 20px">
+          Transformation Options
+        </h3>
+
+        <div class="form-group">
+          <label for="width">Width (pixels)</label>
+          <input
+            type="number"
+            id="width"
+            min="1"
+            max="4096"
+            placeholder="800"
+          />
+        </div>
+
+        <div class="form-group">
+          <label for="height">Height (pixels)</label>
+          <input
+            type="number"
+            id="height"
+            min="1"
+            max="4096"
+            placeholder="600"
+          />
+        </div>
+
+        <div class="form-group">
+          <label for="fit">Resize Fit Mode</label>
+          <select id="fit">
+            <option value="">Default</option>
+            <option value="cover">Cover</option>
+            <option value="contain">Contain</option>
+            <option value="fill">Fill</option>
+            <option value="inside">Inside</option>
+            <option value="outside">Outside</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="format">Output Format</label>
+          <select id="format">
+            <option value="">Original</option>
+            <option value="jpeg">JPEG</option>
+            <option value="png">PNG</option>
+            <option value="webp">WebP</option>
+            <option value="avif">AVIF</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="quality">Quality (1-100)</label>
+          <input
+            type="number"
+            id="quality"
+            min="1"
+            max="100"
+            placeholder="80"
+          />
+        </div>
+
+        <div class="form-group">
+          <label for="rotate">Rotation (degrees)</label>
+          <input
+            type="number"
+            id="rotate"
+            min="-360"
+            max="360"
+            step="90"
+            placeholder="0"
+          />
+        </div>
+
+        <div class="checkbox-group">
+          <input type="checkbox" id="flip" />
+          <label for="flip">Flip Vertically</label>
+        </div>
+
+        <div class="checkbox-group">
+          <input type="checkbox" id="flop" />
+          <label for="flop">Flip Horizontally</label>
+        </div>
+
+        <div class="checkbox-group">
+          <input type="checkbox" id="grayscale" />
+          <label for="grayscale">Convert to Grayscale</label>
+        </div>
+
+        <div class="form-group">
+          <label for="blur">Blur Radius</label>
+          <input
+            type="number"
+            id="blur"
+            min="0.3"
+            max="100"
+            step="0.1"
+            placeholder="0"
+          />
+        </div>
+
+        <div class="checkbox-group">
+          <input type="checkbox" id="smartCrop" />
+          <label for="smartCrop">Smart Crop (Face Detection)</label>
+        </div>
+
+        <div class="button-group">
+          <button onclick="transformImage()">Transform Image</button>
+          <button onclick="resetForm()" class="secondary-button">Reset</button>
+          <button onclick="useEditsFormat()" class="secondary-button">
+            Use Edits Format
+          </button>
+        </div>
+
+        <div class="error-message" id="error-message"></div>
+      </div>
+
+      <div class="preview-section">
+        <h2>Preview</h2>
+
+        <div class="image-container">
+          <div class="image-box">
+            <h3>Original</h3>
+            <img
+              id="original-image"
+              src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='300'%3E%3Crect width='400' height='300' fill='%23f0f0f0'/%3E%3Ctext x='50%25' y='50%25' text-anchor='middle' dy='.3em' fill='%23999'%3EOriginal Image%3C/text%3E%3C/svg%3E"
+              alt="Original"
+            />
+            <div class="url-display" id="original-url">No image loaded</div>
+          </div>
+
+          <div class="image-box">
+            <h3>Transformed <span id="loading-indicator"></span></h3>
+            <img
+              id="transformed-image"
+              src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='300'%3E%3Crect width='400' height='300' fill='%23f0f0f0'/%3E%3Ctext x='50%25' y='50%25' text-anchor='middle' dy='.3em' fill='%23999'%3ETransformed Image%3C/text%3E%3C/svg%3E"
+              alt="Transformed"
+            />
+            <div class="url-display" id="transformed-url">
+              No transformation applied
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      function transformImage() {
+        const cloudFrontUrl = document
+          .getElementById("cloudfront-url")
+          .value.trim();
+        const bucket = document.getElementById("bucket").value.trim();
+        const key = document.getElementById("key").value.trim();
+
+        if (!cloudFrontUrl || !bucket || !key) {
+          showError("Please fill in all required fields");
+          return;
+        }
+
+        hideError();
+        showLoading();
+
+        // Build original image URL
+        const originalUrl = `${cloudFrontUrl}/${bucket}/${encodeURIComponent(
+          key
+        )}`;
+        document.getElementById("original-image").src = originalUrl;
+        document.getElementById("original-url").textContent = originalUrl;
+
+        // Build transformation parameters
+        const params = new URLSearchParams();
+
+        const width = document.getElementById("width").value;
+        const height = document.getElementById("height").value;
+        const fit = document.getElementById("fit").value;
+        const format = document.getElementById("format").value;
+        const quality = document.getElementById("quality").value;
+        const rotate = document.getElementById("rotate").value;
+        const flip = document.getElementById("flip").checked;
+        const flop = document.getElementById("flop").checked;
+        const grayscale = document.getElementById("grayscale").checked;
+        const blur = document.getElementById("blur").value;
+        const smartCrop = document.getElementById("smartCrop").checked;
+
+        if (width) params.append("width", width);
+        if (height) params.append("height", height);
+        if (fit) params.append("fit", fit);
+        if (format) params.append("format", format);
+        if (quality) params.append("quality", quality);
+        if (rotate && rotate !== "0") params.append("rotate", rotate);
+        if (flip) params.append("flip", "true");
+        if (flop) params.append("flop", "true");
+        if (grayscale) params.append("grayscale", "true");
+        if (blur && blur !== "0") params.append("blur", blur);
+        if (smartCrop) params.append("smartCrop", "true");
+
+        // Build transformed image URL
+        const queryString = params.toString();
+        const transformedUrl = queryString
+          ? `${originalUrl}?${queryString}`
+          : originalUrl;
+
+        document.getElementById("transformed-image").src = transformedUrl;
+        document.getElementById("transformed-url").textContent = transformedUrl;
+
+        // Hide loading indicator when image loads
+        document.getElementById("transformed-image").onload = hideLoading;
+        document.getElementById("transformed-image").onerror = () => {
+          hideLoading();
+          showError("Failed to load transformed image");
+        };
+      }
+
+      function useEditsFormat() {
+        const cloudFrontUrl = document
+          .getElementById("cloudfront-url")
+          .value.trim();
+        const bucket = document.getElementById("bucket").value.trim();
+        const key = document.getElementById("key").value.trim();
+
+        if (!cloudFrontUrl || !bucket || !key) {
+          showError("Please fill in all required fields");
+          return;
+        }
+
+        hideError();
+
+        // Build edits object
+        const edits = {};
+
+        const width = document.getElementById("width").value;
+        const height = document.getElementById("height").value;
+        const fit = document.getElementById("fit").value;
+
+        if (width || height || fit) {
+          edits.resize = {};
+          if (width) edits.resize.width = parseInt(width);
+          if (height) edits.resize.height = parseInt(height);
+          if (fit) edits.resize.fit = fit;
+        }
+
+        const rotate = document.getElementById("rotate").value;
+        if (rotate && rotate !== "0") edits.rotate = parseInt(rotate);
+
+        if (document.getElementById("flip").checked) edits.flip = true;
+        if (document.getElementById("flop").checked) edits.flop = true;
+        if (document.getElementById("grayscale").checked)
+          edits.grayscale = true;
+
+        const blur = document.getElementById("blur").value;
+        if (blur && blur !== "0") edits.blur = parseFloat(blur);
+
+        const format = document.getElementById("format").value;
+        if (format) edits.toFormat = format;
+
+        const quality = document.getElementById("quality").value;
+        if (quality) {
+          if (format === "jpeg" || !format) {
+            edits.jpeg = { quality: parseInt(quality) };
+          } else if (format === "png") {
+            edits.png = { quality: parseInt(quality) };
+          } else if (format === "webp") {
+            edits.webp = { quality: parseInt(quality) };
+          }
+        }
+
+        if (document.getElementById("smartCrop").checked)
+          edits.smartCrop = true;
+
+        // Encode edits as base64
+        const editsBase64 = btoa(JSON.stringify(edits));
+
+        // Build URLs
+        const originalUrl = `${cloudFrontUrl}/${bucket}/${encodeURIComponent(
+          key
+        )}`;
+        const transformedUrl = `${originalUrl}?edits=${editsBase64}`;
+
+        // Show edits format in console
+        console.log("Edits object:", edits);
+        console.log("Base64 encoded:", editsBase64);
+
+        // Display images
+        document.getElementById("original-image").src = originalUrl;
+        document.getElementById("original-url").textContent = originalUrl;
+        document.getElementById("transformed-image").src = transformedUrl;
+        document.getElementById("transformed-url").textContent = transformedUrl;
+      }
+
+      function resetForm() {
+        document.getElementById("width").value = "";
+        document.getElementById("height").value = "";
+        document.getElementById("fit").value = "";
+        document.getElementById("format").value = "";
+        document.getElementById("quality").value = "";
+        document.getElementById("rotate").value = "";
+        document.getElementById("flip").checked = false;
+        document.getElementById("flop").checked = false;
+        document.getElementById("grayscale").checked = false;
+        document.getElementById("blur").value = "";
+        document.getElementById("smartCrop").checked = false;
+        hideError();
+      }
+
+      function showError(message) {
+        const errorElement = document.getElementById("error-message");
+        errorElement.textContent = message;
+        errorElement.style.display = "block";
+      }
+
+      function hideError() {
+        document.getElementById("error-message").style.display = "none";
+      }
+
+      function showLoading() {
+        document.getElementById("loading-indicator").innerHTML =
+          '<span class="loading"></span>';
+      }
+
+      function hideLoading() {
+        document.getElementById("loading-indicator").innerHTML = "";
+      }
+
+      // Load CloudFront URL from localStorage if available
+      window.onload = function () {
+        const savedUrl = localStorage.getItem("cloudfront-url");
+        if (savedUrl) {
+          document.getElementById("cloudfront-url").value = savedUrl;
+        }
+      };
+
+      // Save CloudFront URL to localStorage
+      document
+        .getElementById("cloudfront-url")
+        .addEventListener("change", function () {
+          localStorage.setItem("cloudfront-url", this.value);
+        });
+    </script>
+  </body>
+</html>
