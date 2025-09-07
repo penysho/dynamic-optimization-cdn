@@ -1,7 +1,7 @@
 # https://docs.aws.amazon.com/ja_jp/lambda/latest/dg/typescript-image.html
 
-# Use the official AWS Lambda Node.js 18 base image
-FROM public.ecr.aws/lambda/nodejs:18 AS builder
+# Use the official AWS Lambda Node.js 22 base image
+FROM public.ecr.aws/lambda/nodejs:22 AS builder
 
 # Set working directory
 WORKDIR ${LAMBDA_TASK_ROOT}
@@ -20,7 +20,7 @@ COPY src/ ./src/
 RUN npm run build
 
 # Production stage
-FROM public.ecr.aws/lambda/nodejs:18
+FROM public.ecr.aws/lambda/nodejs:22
 
 # Set working directory
 WORKDIR ${LAMBDA_TASK_ROOT}
