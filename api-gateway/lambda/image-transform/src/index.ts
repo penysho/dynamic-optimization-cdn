@@ -194,6 +194,3 @@ export const handler: LambdaHandler = async (
 ): Promise<APIGatewayProxyResult> => {
   return handlerInstance.handle(event, context);
 };
-
-// For Lambda container compatibility, also export using module.exports
-module.exports = { handler };
