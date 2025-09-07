@@ -177,6 +177,11 @@ export class ApiGatewayStack extends cdk.Stack {
       }
     } else if (existingImageBucketName) {
       imageBucketName = existingImageBucketName;
+    } else {
+      throw new Error(
+        "Either createImageBucket must be true or existingImageBucketName must be provided. " +
+          "The new proxy pattern requires a configured S3 bucket for image storage."
+      );
     }
 
     // Create Lambda function for image transformation using container image
@@ -201,7 +206,7 @@ export class ApiGatewayStack extends cdk.Stack {
         environment: {
           ENABLE_SIGNATURE: enableSignature.toString(),
           SECRET_NAME: secretName || "",
-          IMAGE_BUCKET: imageBucketName || "",
+          IMAGE_BUCKET: imageBucketName || existingImageBucketName || "",
           ENABLE_SMART_CROP: enableSmartCrop.toString(),
           ENABLE_CONTENT_MODERATION: enableContentModeration.toString(),
           AUTO_WEBP: enableAutoWebP.toString(),
@@ -298,11 +303,9 @@ export class ApiGatewayStack extends cdk.Stack {
       }
     );
 
-    // Add resource and method for /{bucket}/{key+}
-    const bucketResource = this.apiEndpoint.root.addResource("{bucket}");
-    const keyResource = bucketResource.addResource("{key+}");
-
-    keyResource.addMethod("GET", lambdaIntegration);
+    // Add proxy resource for all paths (/{proxy+})
+    const proxyResource = this.apiEndpoint.root.addResource("{proxy+}");
+    proxyResource.addMethod("ANY", lambdaIntegration);
 
     // Create CloudFront Function for request modification
     const requestModifierFunction = new cloudfront.Function(

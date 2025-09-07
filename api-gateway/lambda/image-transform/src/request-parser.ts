@@ -18,51 +18,50 @@ export class RequestParser {
   }
 
   /**
-   * Extract bucket and key from API Gateway event
+   * Extract bucket and key from API Gateway proxy path
+   * Uses {proxy+} pattern where the entire path represents the S3 object key
+   * The bucket is determined from IMAGE_BUCKET environment variable
    * @param event - API Gateway event
    * @returns Bucket and key information
-   * @throws {ImageProcessingError} If path parameters are invalid
+   * @throws {ImageProcessingError} If path parameters are invalid or bucket not configured
    */
   extractBucketAndKey(event: APIGatewayProxyEvent): {
     bucket: string;
     key: string;
   } {
-    if (!event.pathParameters) {
-      throw new ImageProcessingError("Missing path parameters", 400);
+    // Bucket must be configured via IMAGE_BUCKET environment variable
+    if (!this.config.imageBucket) {
+      throw new ImageProcessingError(
+        "IMAGE_BUCKET environment variable must be configured",
+        500
+      );
     }
 
-    let bucket: string;
+    const bucket = this.config.imageBucket;
     let key: string;
 
-    // If IMAGE_BUCKET is configured, use it as the bucket and treat the entire path as the key
-    if (this.config.imageBucket) {
-      bucket = this.config.imageBucket;
-
-      const pathParams = event.pathParameters;
-      if (pathParams.bucket && pathParams.key) {
-        // Combine bucket and key from path to form the complete key
-        key = `${pathParams.bucket}/${pathParams.key}`;
-      } else if (pathParams.key) {
-        key = pathParams.key;
-      } else {
-        throw new ImageProcessingError("Missing key in path", 400);
+    // Extract key from proxy path parameter
+    if (event.pathParameters?.proxy) {
+      key = event.pathParameters.proxy;
+    } else if (event.path) {
+      // Fallback: parse from full path (remove leading slash)
+      key = event.path.startsWith("/") ? event.path.substring(1) : event.path;
+      if (!key) {
+        throw new ImageProcessingError("Empty key in path", 400);
       }
     } else {
-      // Original behavior: first segment is bucket, rest is key
-      const pathParams = event.pathParameters;
-      bucket = pathParams.bucket || "";
-      key = pathParams.key || "";
-
-      if (!bucket || !key) {
-        throw new ImageProcessingError("Missing bucket or key in path", 400);
-      }
+      throw new ImageProcessingError("Missing key in path", 400);
     }
 
-    // Validate bucket and key
-    Validators.validateBucketName(bucket);
+    // Validate key
     Validators.validateObjectKey(key);
 
-    this.logger.debug("Extracted bucket and key", { bucket, key });
+    this.logger.debug("Extracted bucket and key", {
+      bucket,
+      key,
+      proxyPath: event.pathParameters?.proxy,
+      fullPath: event.path,
+    });
     return { bucket, key };
   }
 

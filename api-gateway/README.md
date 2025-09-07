@@ -29,8 +29,15 @@
 
 ## APIエンドポイント
 
-- `GET /{bucket}/{key}?edits={base64-encoded-json}` - 指定されたeditsによる画像変換
-- `GET /{bucket}/{key}?{transformation-params}` - クエリパラメータによる画像変換
+プロキシ統合パターン（`{proxy+}`）を使用し、S3オブジェクトキーをパスとして直接受け取ります：
+
+- `GET /{key}?edits={base64-encoded-json}` - 指定されたeditsによる画像変換（AWS Serverless Image Handler互換）
+- `GET /{key}?{transformation-params}` - クエリパラメータによる画像変換
+
+**パス形式の例:**
+- `/images/photo.jpg?width=800&height=600&format=webp`
+- `/folder/subfolder/image.png?quality=80&fit=cover`
+- `/photos/vacation.jpg?edits=eyJ3aWR0aCI6ODAwLCJoZWlnaHQiOjYwMH0=`
 
 ## 変換パラメータ
 
@@ -74,17 +81,24 @@ npm run build
 ```
 
 3. スタックをデプロイ:
+
 ```bash
-npx cdk deploy
+# 新しいバケットを作成する場合
+npx cdk deploy --context createImageBucket=true
+
+# 既存のバケットを使用する場合
+npx cdk deploy --context existingImageBucketName=my-existing-bucket
+
+# 追加オプション付きでデプロイ
+npx cdk deploy \
+  --context createImageBucket=true \
+  --context deployDemoUi=true \
+  --context enableSmartCrop=true \
+  --context deploySampleImages=true
 ```
 
-デプロイをカスタマイズするためにコンテキスト変数を渡すこともできます：
-```bash
-npx cdk deploy \
-  --context deployDemoUi=true \
-  --context enableSignature=false \
-  --context enableSmartCrop=true
-```
+**必須パラメータ:**
+- `createImageBucket=true` または `existingImageBucketName=bucket-name` のいずれかが必要
 
 ### 画像ソースバケットの作成
 
