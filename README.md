@@ -52,9 +52,19 @@ S3オブジェクトアクセス時の透過的な画像変換システム
 
 ### 共通前提条件
 
-- Node.js 18.x以上
+- Node.js 18.x以上（API Gatewayは22.x以上推奨）
+- Python 3.11以上（S3 Object Lambdaソリューション用）
 - AWS CLI設定済み
 - AWS CDK CLI (`npm install -g aws-cdk`)
+
+### 統一されたプロジェクト構造
+
+両ソリューションは保守性を重視し、以下の統一された構造を採用しています：
+
+- **`cdk/`**: AWS CDKによるインフラストラクチャ定義
+- **`lambda/`**: アプリケーションロジック（Lambda関数）
+- **明確な関心事の分離**: インフラ定義とアプリケーション実装の分離
+- **統一されたドキュメント**: 各ソリューションで一貫したREADME構造
 
 ### ソリューション選択ガイド
 
@@ -74,21 +84,62 @@ S3オブジェクトアクセス時の透過的な画像変換システム
 ```
 dynamic-optimization-cdn/
 ├── api-gateway/                     # API Gateway + Lambda ソリューション
-│   ├── lib/                        # CDKスタック定義
-│   ├── lambda/image-transform/     # TypeScript Lambda関数
+│   ├── cdk/                        # AWS CDK設定
+│   │   ├── bin/api-gateway.ts     # CDKエントリーポイント
+│   │   ├── lib/api-gateway-stack.ts # スタック定義
+│   │   ├── test/                   # CDKテスト
+│   │   └── package.json            # CDK依存関係
+│   ├── lambda/                     # Lambda関数
+│   │   └── image-transform/        # TypeScript画像変換Lambda
 │   ├── cloudfront-functions/       # CloudFront Functions
 │   ├── demo-ui/                    # デモ用UI
+│   ├── sample-images/              # サンプル画像
 │   └── README.md                   # 詳細ドキュメント
 ├── s3-object-lambda/               # S3 Object Lambda ソリューション
-│   ├── cdk/                        # CDKスタック定義
-│   ├── lambda/                     # Python Lambda関数
+│   ├── cdk/                        # AWS CDK設定
+│   │   ├── bin/cdk.ts             # CDKエントリーポイント
+│   │   ├── lib/s3-object-lambda-stack.ts # スタック定義
+│   │   ├── test/                   # CDKテスト
+│   │   └── package.json            # CDK依存関係
+│   ├── lambda/                     # Lambda関数
+│   │   ├── index.py               # Python画像変換Lambda
+│   │   └── pyproject.toml         # Python依存関係
 │   └── README.md                   # 詳細ドキュメント
 └── README.md                       # このファイル
 ```
 
 ## 🛠️ デプロイ手順
 
-各ソリューションの詳細なデプロイ手順は、それぞれのディレクトリ内のREADMEを参照してください：
+### 基本デプロイフロー
+
+各ソリューション共通の基本的なデプロイ手順：
+
+1. **依存関係のインストール**
+   ```bash
+   # CDK依存関係
+   cd [solution-name]/cdk
+   npm install
+
+   # アプリケーション依存関係（ソリューション固有）
+   cd ../lambda
+   # API Gateway: npm install && npm run build
+   # S3 Object Lambda: uv sync
+   ```
+
+2. **CDKブートストラップ（初回のみ）**
+   ```bash
+   cd cdk
+   npx cdk bootstrap
+   ```
+
+3. **デプロイ実行**
+   ```bash
+   npx cdk deploy
+   ```
+
+### 詳細な手順
+
+各ソリューションの詳細なデプロイ手順とオプション設定は、それぞれのディレクトリ内のREADMEを参照してください：
 
 - **API Gateway ソリューション**: [`api-gateway/README.md`](./api-gateway/README.md)
 - **S3 Object Lambda ソリューション**: [`s3-object-lambda/README.md`](./s3-object-lambda/README.md)
@@ -117,14 +168,50 @@ dynamic-optimization-cdn/
 | コンテンツモデレーション | ✅ (Rekognition) | ❌ |
 | サイズ制限 | ✅ 設定可能 | ✅ 固定 |
 
+## 🔧 開発・保守
+
+### 統一された開発体験
+
+両ソリューションは以下の共通原則に基づいて設計されています：
+
+- **明確な関心事の分離**: インフラ定義（CDK）とアプリケーション実装（Lambda）の分離
+- **一貫したプロジェクト構造**: 学習コストを削減し、保守性を向上
+- **包括的なドキュメント**: セットアップから運用まで詳細に記載
+- **ベストプラクティスの適用**: 各技術スタックの推奨パターンを採用
+
+### 開発ワークフロー
+
+1. **ローカル開発**
+   ```bash
+   cd [solution-name]/lambda
+   # コード変更・テスト実行
+   ```
+
+2. **差分確認**
+   ```bash
+   cd cdk
+   npx cdk diff
+   ```
+
+3. **デプロイ**
+   ```bash
+   npx cdk deploy
+   ```
+
 ## 🔍 監視・運用
 
-両ソリューション共通の監視ポイント：
+### 共通監視ポイント
 
 - **CloudWatch Logs**: Lambda関数の実行ログ
 - **CloudFront メトリクス**: キャッシュヒット率、レスポンス時間
 - **API Gateway メトリクス**: リクエスト数、エラー率（API Gatewayソリューションのみ）
 - **コスト監視**: Lambda実行時間、データ転送量
+
+### パフォーマンス最適化
+
+- **適切なキャッシュ設定**: CloudFrontでの効率的なキャッシュ戦略
+- **Lambda最適化**: メモリサイズ・タイムアウトの適切な設定
+- **画像フォーマット選択**: WebP/AVIF等の最新フォーマット活用
 
 ## 📚 参考情報
 

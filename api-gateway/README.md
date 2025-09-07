@@ -52,50 +52,59 @@
 - `grayscale`: グレースケール変換
 - `blur`: ぼかし半径
 
-## 前提条件
+## 🛠️ セットアップ
 
-- 適切な認証情報で設定されたAWS CLI
+### 前提条件
+
 - Node.js 22.x以降
-- AWS CDK CLIがインストール済み (`npm install -g aws-cdk`)
+- AWS CLI設定済み
+- AWS CDK CLI (`npm install -g aws-cdk`)
 
-## インストール
+### インストール
 
-依存関係をインストール:
-```bash
-npm install
-```
+1. **CDK依存関係のインストール**
+   ```bash
+   cd cdk
+   npm install
+   ```
 
-## デプロイ
+2. **Lambda依存関係のインストール**
+   ```bash
+   cd lambda/image-transform
+   npm install
+   npm run build
+   cd ../..
+   ```
 
-1. Lambda TypeScriptコードをビルド:
-```bash
-cd lambda/image-transform
-npm install
-npm run build
-cd ../..
-```
+### デプロイ
 
-2. CDK TypeScriptコードをビルド:
-```bash
-npm run build
-```
+1. **CDKのブートストラップ（初回のみ）**
+   ```bash
+   cd cdk
+   npx cdk bootstrap
+   ```
 
-3. スタックをデプロイ:
+2. **CDK TypeScriptコードをビルド**
+   ```bash
+   npm run build
+   ```
 
-```bash
-# 新しいバケットを作成する場合
-npx cdk deploy --context createImageBucket=true
+3. **スタックをデプロイ**
 
-# 既存のバケットを使用する場合
-npx cdk deploy --context existingImageBucketName=my-existing-bucket
+   ```bash
+   # 新しいバケットを作成する場合
+   npx cdk deploy --context createImageBucket=true
 
-# 追加オプション付きでデプロイ
-npx cdk deploy \
-  --context createImageBucket=true \
-  --context deployDemoUi=true \
-  --context enableSmartCrop=true \
-  --context deploySampleImages=true
-```
+   # 既存のバケットを使用する場合
+   npx cdk deploy --context existingImageBucketName=my-existing-bucket
+
+   # 追加オプション付きでデプロイ
+   npx cdk deploy \
+     --context createImageBucket=true \
+     --context deployDemoUi=true \
+     --context enableSmartCrop=true \
+     --context deploySampleImages=true
+   ```
 
 **必須パラメータ:**
 - `createImageBucket=true` または `existingImageBucketName=bucket-name` のいずれかが必要
@@ -104,6 +113,7 @@ npx cdk deploy \
 
 画像用の既存のS3バケットがない場合、スタックで新しく作成できます：
 ```bash
+cd cdk
 npx cdk deploy \
   --context createImageBucket=true \
   --context deploySampleImages=true
@@ -113,8 +123,33 @@ npx cdk deploy \
 
 既存のS3バケットを使用する場合：
 ```bash
+cd cdk
 npx cdk deploy \
   --context existingImageBucketName=my-existing-bucket
+```
+
+## 📁 プロジェクト構造
+
+```
+api-gateway/
+├── cdk/                          # AWS CDK設定
+│   ├── bin/api-gateway.ts       # CDKアプリケーションエントリーポイント
+│   ├── lib/api-gateway-stack.ts # メインスタック定義
+│   ├── cdk.json                 # CDK設定
+│   ├── package.json             # Node.js依存関係
+│   ├── tsconfig.json            # TypeScript設定
+│   ├── jest.config.js           # テスト設定
+│   └── test/                    # CDKテスト
+├── lambda/                      # Lambda関数
+│   └── image-transform/         # 画像変換Lambda
+│       ├── src/                 # TypeScriptソース
+│       ├── package.json         # Lambda依存関係
+│       ├── tsconfig.json        # Lambda TypeScript設定
+│       └── Dockerfile           # Lambda Docker設定
+├── cloudfront-functions/        # CloudFront Functions
+├── demo-ui/                     # デモUI
+├── sample-images/               # サンプル画像
+└── README.md                    # このファイル
 ```
 
 ## 設定オプション
@@ -227,6 +262,38 @@ Lambda関数は以下の改善を含むTypeScriptで書き直されています�
    - パフォーマンスメトリクスとタイミング
    - 詳細なエラーコンテキスト
 
+## 🔧 開発
+
+### Lambda関数の開発
+
+```bash
+cd lambda/image-transform
+npm install
+npm run build
+npm test
+```
+
+### CDKの差分確認
+
+```bash
+cd cdk
+npx cdk diff
+```
+
+### テスト実行
+
+**Lambda関数のテスト:**
+```bash
+cd lambda/image-transform
+npm test
+```
+
+**CDKテスト:**
+```bash
+cd cdk
+npm test
+```
+
 ### 開発ワークフロー
 
 1. TypeScriptソースファイルは`lambda/image-transform/src/`にあります
@@ -234,9 +301,10 @@ Lambda関数は以下の改善を含むTypeScriptで書き直されています�
 3. CDKがLambdaデプロイ用にdistフォルダをバンドル
 4. デバッグ用にソースマップが含まれます
 
-## クリーンアップ
+## 🗑️ クリーンアップ
 
 スタックとすべてのリソースを削除するには：
 ```bash
+cd cdk
 npx cdk destroy
 ```

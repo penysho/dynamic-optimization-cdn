@@ -169,7 +169,7 @@ export class ApiGatewayStack extends cdk.Stack {
       if (deploySampleImages) {
         new s3deploy.BucketDeployment(this, "DeploySampleImages", {
           sources: [
-            s3deploy.Source.asset(path.join(__dirname, "../sample-images")),
+            s3deploy.Source.asset(path.join(__dirname, "../../sample-images")),
           ],
           destinationBucket: this.imageBucket,
           destinationKeyPrefix: "samples/",
@@ -190,12 +190,12 @@ export class ApiGatewayStack extends cdk.Stack {
       "ImageTransformFunction",
       {
         code: lambda.Code.fromAssetImage(
-          path.join(__dirname, "../lambda/image-transform"),
+          path.join(__dirname, "../../lambda/image-transform"),
           {
             buildArgs: {
               "--platform": "linux/amd64",
             },
-            platform: cdk.aws_ecr_assets.Platform.LINUX_AMD64, // Without this property, Lambda will not run due to “Runtime.InvalidEntrypoint”.
+            platform: cdk.aws_ecr_assets.Platform.LINUX_AMD64, // Without this property, Lambda will not run due to "Runtime.InvalidEntrypoint".
           }
         ),
         handler: lambda.Handler.FROM_IMAGE,
@@ -317,7 +317,7 @@ export class ApiGatewayStack extends cdk.Stack {
         code: cloudfront.FunctionCode.fromFile({
           filePath: path.join(
             __dirname,
-            "../cloudfront-functions/request-modifier.js"
+            "../../cloudfront-functions/request-modifier.js"
           ),
         }),
         runtime: cloudfront.FunctionRuntime.JS_2_0,
@@ -409,7 +409,7 @@ export class ApiGatewayStack extends cdk.Stack {
       });
 
       new s3deploy.BucketDeployment(this, "DeployDemoUi", {
-        sources: [s3deploy.Source.asset(path.join(__dirname, "../demo-ui"))],
+        sources: [s3deploy.Source.asset(path.join(__dirname, "../../demo-ui"))],
         destinationBucket: demoUiBucket,
       });
 
