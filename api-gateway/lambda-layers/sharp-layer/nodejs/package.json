@@ -1,8 +1,0 @@
-{
-  "name": "sharp-layer",
-  "version": "1.0.0",
-  "description": "Sharp image processing library layer for AWS Lambda",
-  "dependencies": {
-    "sharp": "^0.32.6"
-  }
-}

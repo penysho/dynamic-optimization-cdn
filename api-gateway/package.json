@@ -23,11 +23,8 @@
     "@aws-cdk/aws-apigatewayv2-alpha": "^2.114.1-alpha.0",
     "@aws-cdk/aws-apigatewayv2-integrations-alpha": "^2.114.1-alpha.0",
     "@aws-cdk/aws-s3-deployment": "^1.203.0",
-    "@types/aws-lambda": "^8.10.152",
-    "@types/sharp": "^0.31.1",
     "aws-cdk-lib": "2.211.0",
     "aws-sdk": "^2.1692.0",
-    "constructs": "^10.0.0",
-    "sharp": "^0.34.3"
+    "constructs": "^10.0.0"
   }
 }

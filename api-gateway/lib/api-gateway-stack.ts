@@ -179,28 +179,25 @@ export class ApiGatewayStack extends cdk.Stack {
       imageBucketName = existingImageBucketName;
     }
 
-    // Create Lambda layer for Sharp
-    const sharpLayer = new lambda.LayerVersion(this, "SharpLayer", {
-      code: lambda.Code.fromAsset(
-        path.join(__dirname, "../lambda-layers/sharp-layer")
-      ),
-      compatibleRuntimes: [lambda.Runtime.NODEJS_18_X],
-      description: "Sharp image processing library",
-    });
-
-    // Create Lambda function for image transformation
+    // Create Lambda function for image transformation using container image
     this.imageTransformFunction = new lambda.Function(
       this,
       "ImageTransformFunction",
       {
-        runtime: lambda.Runtime.NODEJS_18_X,
-        handler: "index.handler",
-        code: lambda.Code.fromAsset(
-          path.join(__dirname, "../lambda/image-transform")
+        code: lambda.Code.fromAssetImage(
+          path.join(__dirname, "../lambda/image-transform"),
+          {
+            buildArgs: {
+              "--platform": "linux/amd64",
+            },
+            platform: cdk.aws_ecr_assets.Platform.LINUX_AMD64, // Without this property, Lambda will not run due to “Runtime.InvalidEntrypoint”.
+          }
         ),
+        handler: lambda.Handler.FROM_IMAGE,
+        runtime: lambda.Runtime.FROM_IMAGE,
+        architecture: lambda.Architecture.X86_64,
         memorySize: lambdaMemorySize,
         timeout: cdk.Duration.seconds(Math.min(lambdaTimeout, 29)),
-        layers: [sharpLayer],
         environment: {
           ENABLE_SIGNATURE: enableSignature.toString(),
           SECRET_NAME: secretName || "",
@@ -284,6 +281,13 @@ export class ApiGatewayStack extends cdk.Stack {
           "X-Amz-Security-Token",
         ],
       },
+    });
+
+    // Grant API Gateway permission to invoke the Lambda function
+    this.imageTransformFunction.addPermission("ApiGatewayInvokePermission", {
+      principal: new iam.ServicePrincipal("apigateway.amazonaws.com"),
+      action: "lambda:InvokeFunction",
+      sourceArn: `arn:aws:execute-api:${this.region}:${this.account}:${this.apiEndpoint.restApiId}/*/*`,
     });
 
     // Create Lambda integration

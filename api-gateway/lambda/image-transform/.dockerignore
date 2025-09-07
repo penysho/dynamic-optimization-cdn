@@ -1,0 +1,41 @@
+# Ignore development dependencies and files
+node_modules
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Note: src/ and tsconfig.json are needed for build stage
+
+# Ignore development and testing files
+test/
+jest.config.js
+*.test.js
+*.spec.js
+
+# Ignore documentation
+README.md
+*.md
+
+# Ignore git files
+.git
+.gitignore
+
+# Ignore IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Ignore OS files
+.DS_Store
+Thumbs.db
+
+# Ignore build artifacts that aren't needed
+*.log
+*.tmp
+*.temp
+coverage/
+
+# Ignore Docker files (they shouldn't be copied into the image)
+Dockerfile
+.dockerignore

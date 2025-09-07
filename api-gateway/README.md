@@ -16,13 +16,16 @@ The solution uses the following AWS services:
 ## Key Features
 
 1. **Dynamic Image Transformation**: Resize, crop, format conversion, quality adjustment
-2. **CloudFront Function Integration**: Request optimization at the edge for better performance
-3. **Auto WebP Conversion**: Automatic WebP format conversion based on Accept headers
-4. **Caching**: CloudFront caching with optimized error response handling
-5. **Security**: Optional signature validation for request authentication
-6. **Smart Features**: Optional smart cropping and content moderation using Amazon Rekognition
-7. **Extensibility**: Modular design allows easy addition of new transformation features
-8. **Monitoring**: CloudWatch integration for logs and metrics
+2. **TypeScript Implementation**: Type-safe, maintainable code with comprehensive error handling
+3. **CloudFront Function Integration**: Request optimization at the edge for better performance
+4. **Auto WebP Conversion**: Automatic WebP format conversion based on Accept headers
+5. **Caching**: CloudFront caching with optimized error response handling
+6. **Security**: Optional signature validation for request authentication
+7. **Smart Features**: Optional smart cropping and content moderation using Amazon Rekognition
+8. **Robust Validation**: Comprehensive input validation and sanitization
+9. **Structured Logging**: JSON-based structured logging for better observability
+10. **Extensibility**: Modular design allows easy addition of new transformation features
+11. **Monitoring**: CloudWatch integration for logs and metrics
 
 ## API Endpoints
 
@@ -62,12 +65,20 @@ npm install
 
 ## Deployment
 
-1. Build the TypeScript code:
+1. Build the Lambda TypeScript code:
+```bash
+cd lambda/image-transform
+npm install
+npm run build
+cd ../..
+```
+
+2. Build the CDK TypeScript code:
 ```bash
 npm run build
 ```
 
-2. Deploy the stack:
+3. Deploy the stack:
 ```bash
 npx cdk deploy
 ```
@@ -167,6 +178,52 @@ https://d123456789.cloudfront.net/my-bucket/images/portrait.jpg?width=400&height
 - **CloudFront Logs**: Access logs are stored in the logs S3 bucket
 - **API Gateway Metrics**: Monitor API performance and errors
 - **X-Ray Tracing**: Enable for detailed request tracing (optional)
+
+## TypeScript Implementation Details
+
+### Architecture Improvements
+
+The Lambda function has been rewritten in TypeScript with the following improvements:
+
+1. **Type Safety**: Comprehensive type definitions for all interfaces and APIs
+2. **Modular Design**: Separated concerns into focused classes:
+   - `Config`: Environment variable management and validation
+   - `Logger`: Structured logging with configurable levels
+   - `AWSClients`: Centralized AWS service client management
+   - `ImageProcessor`: Image transformation logic using Sharp
+   - `RequestParser`: Request parsing and parameter validation
+   - `SignatureValidator`: HMAC signature validation
+   - `ResponseBuilder`: HTTP response construction
+   - `Validators`: Input validation and sanitization
+
+3. **Enhanced Error Handling**:
+   - Custom `ImageProcessingError` class with proper status codes
+   - Comprehensive AWS error mapping
+   - Graceful error recovery where appropriate
+
+4. **Robust Validation**:
+   - Input sanitization to prevent XSS attacks
+   - Parameter range validation
+   - S3 bucket and object key validation
+   - Image format validation
+
+5. **Improved Security**:
+   - Constant-time signature comparison
+   - Comprehensive security headers
+   - Input sanitization and validation
+
+6. **Better Observability**:
+   - Structured JSON logging
+   - Configurable log levels
+   - Performance metrics and timing
+   - Detailed error context
+
+### Development Workflow
+
+1. TypeScript source files are in `lambda/image-transform/src/`
+2. Build generates JavaScript in `lambda/image-transform/dist/`
+3. CDK bundles the dist folder for Lambda deployment
+4. Source maps are included for debugging
 
 ## Cleanup
 
