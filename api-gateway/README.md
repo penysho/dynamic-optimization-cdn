@@ -48,7 +48,7 @@
 ## 前提条件
 
 - 適切な認証情報で設定されたAWS CLI
-- Node.js 18.x以降
+- Node.js 22.x以降
 - AWS CDK CLIがインストール済み (`npm install -g aws-cdk`)
 
 ## インストール
