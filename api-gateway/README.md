@@ -1,71 +1,71 @@
-# Dynamic Image Transformation with API Gateway
+# API Gatewayによる動的画像変換
 
-This project implements a dynamic image transformation solution using Amazon API Gateway, Lambda, and CloudFront based on AWS's Dynamic Image Transformation for Amazon CloudFront architecture.
+このプロジェクトは、AWSの「Dynamic Image Transformation for Amazon CloudFront」アーキテクチャをベースに、Amazon API Gateway、Lambda、CloudFrontを使用した動的画像変換ソリューションを実装しています。
 
-## Architecture Overview
+## アーキテクチャ概要
 
-The solution uses the following AWS services:
-- **Amazon CloudFront**: CDN for caching transformed images with edge-side request optimization
-- **CloudFront Functions**: Lightweight JavaScript functions for request/response modification at the edge
-- **Amazon API Gateway**: REST API endpoint for image requests
-- **AWS Lambda**: Serverless function for image transformation using Sharp
-- **Amazon S3**: Storage for original images and logs
-- **AWS Secrets Manager**: (Optional) Stores secrets for signature validation
-- **Amazon Rekognition**: (Optional) For smart cropping and content moderation
+このソリューションでは以下のAWSサービスを使用します：
+- **Amazon CloudFront**: エッジサイドリクエスト最適化による変換済み画像のキャッシュ配信CDN
+- **CloudFront Functions**: エッジでのリクエスト/レスポンス変更を行う軽量JavaScript関数
+- **Amazon API Gateway**: 画像リクエスト用のREST APIエンドポイント
+- **AWS Lambda**: Sharpを使用した画像変換のためのサーバーレス関数
+- **Amazon S3**: 元画像とログの保存ストレージ
+- **AWS Secrets Manager**: （オプション）署名検証用シークレットの保存
+- **Amazon Rekognition**: （オプション）スマートクロップとコンテンツモデレーション
 
-## Key Features
+## 主要機能
 
-1. **Dynamic Image Transformation**: Resize, crop, format conversion, quality adjustment
-2. **TypeScript Implementation**: Type-safe, maintainable code with comprehensive error handling
-3. **CloudFront Function Integration**: Request optimization at the edge for better performance
-4. **Auto WebP Conversion**: Automatic WebP format conversion based on Accept headers
-5. **Caching**: CloudFront caching with optimized error response handling
-6. **Security**: Optional signature validation for request authentication
-7. **Smart Features**: Optional smart cropping and content moderation using Amazon Rekognition
-8. **Robust Validation**: Comprehensive input validation and sanitization
-9. **Structured Logging**: JSON-based structured logging for better observability
-10. **Extensibility**: Modular design allows easy addition of new transformation features
-11. **Monitoring**: CloudWatch integration for logs and metrics
+1. **動的画像変換**: リサイズ、クロップ、フォーマット変換、品質調整
+2. **TypeScript実装**: 包括的なエラーハンドリングを含む型安全で保守性の高いコード
+3. **CloudFront Function統合**: エッジでのリクエスト最適化によるパフォーマンス向上
+4. **自動WebP変換**: Acceptヘッダーに基づく自動WebPフォーマット変換
+5. **キャッシュ**: 最適化されたエラーレスポンス処理を含むCloudFrontキャッシュ
+6. **セキュリティ**: リクエスト認証のためのオプション署名検証
+7. **スマート機能**: Amazon Rekognitionを使用したオプションのスマートクロップとコンテンツモデレーション
+8. **堅牢な検証**: 包括的な入力検証とサニタイズ
+9. **構造化ログ**: 可観測性向上のためのJSONベース構造化ログ
+10. **拡張性**: 新しい変換機能を簡単に追加できるモジュラー設計
+11. **監視**: ログとメトリクスのためのCloudWatch統合
 
-## API Endpoints
+## APIエンドポイント
 
-- `GET /{bucket}/{key}?edits={base64-encoded-json}` - Transform image with specified edits
-- `GET /{bucket}/{key}?{transformation-params}` - Transform image with query parameters
+- `GET /{bucket}/{key}?edits={base64-encoded-json}` - 指定されたeditsによる画像変換
+- `GET /{bucket}/{key}?{transformation-params}` - クエリパラメータによる画像変換
 
-## Transformation Parameters
+## 変換パラメータ
 
-- `width`: Target width
-- `height`: Target height
-- `fit`: Resize fit mode (cover, contain, fill, inside, outside)
-- `format`: Output format (jpeg, png, webp, avif, etc.)
-- `quality`: Output quality (1-100)
-- `rotate`: Rotation angle
-- `flip`: Flip horizontally
-- `flop`: Flip vertically
-- `grayscale`: Convert to grayscale
-- `blur`: Blur radius
+- `width`: 対象幅
+- `height`: 対象高さ
+- `fit`: リサイズフィットモード (cover, contain, fill, inside, outside)
+- `format`: 出力フォーマット (jpeg, png, webp, avif など)
+- `quality`: 出力品質 (1-100)
+- `rotate`: 回転角度
+- `flip`: 水平反転
+- `flop`: 垂直反転
+- `grayscale`: グレースケール変換
+- `blur`: ぼかし半径
 
-## Prerequisites
+## 前提条件
 
-- AWS CLI configured with appropriate credentials
-- Node.js 18.x or later
-- AWS CDK CLI installed (`npm install -g aws-cdk`)
+- 適切な認証情報で設定されたAWS CLI
+- Node.js 18.x以降
+- AWS CDK CLIがインストール済み (`npm install -g aws-cdk`)
 
-## Installation
+## インストール
 
-1. Install dependencies:
+1. 依存関係をインストール:
 ```bash
 npm install
 ```
 
-2. Build the Sharp layer (required for image processing):
+2. Sharpレイヤーをビルド（画像処理に必要）:
 ```bash
 ./build-sharp-layer.sh
 ```
 
-## Deployment
+## デプロイ
 
-1. Build the Lambda TypeScript code:
+1. Lambda TypeScriptコードをビルド:
 ```bash
 cd lambda/image-transform
 npm install
@@ -73,17 +73,17 @@ npm run build
 cd ../..
 ```
 
-2. Build the CDK TypeScript code:
+2. CDK TypeScriptコードをビルド:
 ```bash
 npm run build
 ```
 
-3. Deploy the stack:
+3. スタックをデプロイ:
 ```bash
 npx cdk deploy
 ```
 
-You can also pass context variables to customize the deployment:
+デプロイをカスタマイズするためにコンテキスト変数を渡すこともできます：
 ```bash
 npx cdk deploy \
   --context deployDemoUi=true \
@@ -91,53 +91,53 @@ npx cdk deploy \
   --context enableSmartCrop=true
 ```
 
-### Creating an Image Source Bucket
+### 画像ソースバケットの作成
 
-If you don't have an existing S3 bucket for images, the stack can create one for you:
+画像用の既存のS3バケットがない場合、スタックで新しく作成できます：
 ```bash
 npx cdk deploy \
   --context createImageBucket=true \
   --context deploySampleImages=true
 ```
 
-### Using an Existing S3 Bucket
+### 既存のS3バケットの使用
 
-To use an existing S3 bucket:
+既存のS3バケットを使用する場合：
 ```bash
 npx cdk deploy \
   --context existingImageBucketName=my-existing-bucket
 ```
 
-## Configuration Options
+## 設定オプション
 
-- `deployDemoUi`: Deploy a demo UI for testing (default: true)
-- `enableSignature`: Enable request signature validation (default: false)
-- `enableSmartCrop`: Enable face detection-based smart cropping (default: false)
-- `enableContentModeration`: Enable content moderation (default: false)
-- `enableAutoWebP`: Enable automatic WebP conversion based on Accept headers (default: false)
-- `createImageBucket`: Create a new S3 bucket for image storage (default: false)
-- `deploySampleImages`: Deploy sample images to the created bucket (default: false)
-- `existingImageBucketName`: Name of existing S3 bucket to use
+- `deployDemoUi`: テスト用デモUIのデプロイ (デフォルト: true)
+- `enableSignature`: リクエスト署名検証の有効化 (デフォルト: false)
+- `enableSmartCrop`: 顔検出ベースのスマートクロップの有効化 (デフォルト: false)
+- `enableContentModeration`: コンテンツモデレーションの有効化 (デフォルト: false)
+- `enableAutoWebP`: Acceptヘッダーベースの自動WebP変換の有効化 (デフォルト: false)
+- `createImageBucket`: 画像保存用の新しいS3バケットの作成 (デフォルト: false)
+- `deploySampleImages`: 作成されたバケットへのサンプル画像のデプロイ (デフォルト: false)
+- `existingImageBucketName`: 使用する既存のS3バケット名
 
-## Environment Variables
+## 環境変数
 
-- `ENABLE_SIGNATURE`: Enable request signature validation
-- `SECRET_KEY`: AWS Secrets Manager secret name for signature validation
-- `IMAGE_BUCKET`: Specific S3 bucket name for image source (if restricted)
-- `LOG_LEVEL`: Logging level (DEBUG, INFO, WARN, ERROR)
+- `ENABLE_SIGNATURE`: リクエスト署名検証の有効化
+- `SECRET_KEY`: 署名検証用のAWS Secrets Managerシークレット名
+- `IMAGE_BUCKET`: 画像ソース用の特定のS3バケット名（制限がある場合）
+- `LOG_LEVEL`: ログレベル (DEBUG, INFO, WARN, ERROR)
 
-## Usage Examples
+## 使用例
 
-### Basic Image Transformation
+### 基本的な画像変換
 
-Transform an image using query parameters:
+クエリパラメータを使用した画像変換：
 ```
 https://d123456789.cloudfront.net/my-bucket/images/photo.jpg?width=800&height=600&format=webp&quality=85
 ```
 
-### Using Edits Format (Serverless Image Handler Compatible)
+### Edits形式の使用（Serverless Image Handler互換）
 
-Create a base64-encoded JSON edits object:
+base64エンコードされたJSON editsオブジェクトを作成：
 ```json
 {
   "resize": {
@@ -151,83 +151,83 @@ Create a base64-encoded JSON edits object:
 }
 ```
 
-Encode and use in URL:
+エンコードしてURLで使用：
 ```
 https://d123456789.cloudfront.net/my-bucket/images/photo.jpg?edits=ewogICJyZXNpemUiOiB7CiAgICAid2lkdGgiOiA4MDAsCiAgICAiaGVpZ2h0IjogNjAwLAogICAgImZpdCI6ICJjb3ZlciIKICB9LAogICJ3ZWJwIjogewogICAgInF1YWxpdHkiOiA4NQogIH0KfQ==
 ```
 
-### Smart Crop Example
+### スマートクロップの例
 
-Enable face detection-based cropping:
+顔検出ベースのクロップを有効化：
 ```
 https://d123456789.cloudfront.net/my-bucket/images/portrait.jpg?width=400&height=400&smartCrop=true
 ```
 
-## Architecture Benefits
+## アーキテクチャの利点
 
-1. **Cost Optimization**: CloudFront caching reduces Lambda invocations
-2. **High Performance**: Low-latency image delivery through CloudFront edge locations
-3. **Scalability**: Serverless architecture automatically scales with demand
-4. **Security**: Optional request signature validation and content moderation
-5. **Flexibility**: Support for multiple image formats and transformation options
-6. **Compatibility**: Works with existing S3 buckets without modification
+1. **コスト最適化**: CloudFrontキャッシュによるLambda実行回数の削減
+2. **高パフォーマンス**: CloudFrontエッジロケーションによる低遅延画像配信
+3. **スケーラビリティ**: 需要に応じて自動スケールするサーバーレスアーキテクチャ
+4. **セキュリティ**: オプションのリクエスト署名検証とコンテンツモデレーション
+5. **柔軟性**: 複数の画像フォーマットと変換オプションのサポート
+6. **互換性**: 既存のS3バケットを変更なしで使用可能
 
-## Monitoring and Troubleshooting
+## 監視とトラブルシューティング
 
-- **CloudWatch Logs**: Lambda function logs are available in CloudWatch
-- **CloudFront Logs**: Access logs are stored in the logs S3 bucket
-- **API Gateway Metrics**: Monitor API performance and errors
-- **X-Ray Tracing**: Enable for detailed request tracing (optional)
+- **CloudWatch Logs**: Lambda関数のログはCloudWatchで確認可能
+- **CloudFront Logs**: アクセスログはログ用S3バケットに保存
+- **API Gateway Metrics**: API のパフォーマンスとエラーの監視
+- **X-Ray Tracing**: 詳細なリクエストトレース用に有効化可能（オプション）
 
-## TypeScript Implementation Details
+## TypeScript実装詳細
 
-### Architecture Improvements
+### アーキテクチャの改善
 
-The Lambda function has been rewritten in TypeScript with the following improvements:
+Lambda関数は以下の改善を含むTypeScriptで書き直されています：
 
-1. **Type Safety**: Comprehensive type definitions for all interfaces and APIs
-2. **Modular Design**: Separated concerns into focused classes:
-   - `Config`: Environment variable management and validation
-   - `Logger`: Structured logging with configurable levels
-   - `AWSClients`: Centralized AWS service client management
-   - `ImageProcessor`: Image transformation logic using Sharp
-   - `RequestParser`: Request parsing and parameter validation
-   - `SignatureValidator`: HMAC signature validation
-   - `ResponseBuilder`: HTTP response construction
-   - `Validators`: Input validation and sanitization
+1. **型安全性**: すべてのインターフェースとAPIに対する包括的な型定義
+2. **モジュラー設計**: 関心事を焦点化されたクラスに分離：
+   - `Config`: 環境変数管理と検証
+   - `Logger`: 設定可能レベルでの構造化ログ
+   - `AWSClients`: 一元化されたAWSサービスクライアント管理
+   - `ImageProcessor`: Sharpを使用した画像変換ロジック
+   - `RequestParser`: リクエスト解析とパラメータ検証
+   - `SignatureValidator`: HMAC署名検証
+   - `ResponseBuilder`: HTTPレスポンス構築
+   - `Validators`: 入力検証とサニタイズ
 
-3. **Enhanced Error Handling**:
-   - Custom `ImageProcessingError` class with proper status codes
-   - Comprehensive AWS error mapping
-   - Graceful error recovery where appropriate
+3. **強化されたエラーハンドリング**:
+   - 適切なステータスコードを持つカスタム`ImageProcessingError`クラス
+   - 包括的なAWSエラーマッピング
+   - 適切な場所での優雅なエラー回復
 
-4. **Robust Validation**:
-   - Input sanitization to prevent XSS attacks
-   - Parameter range validation
-   - S3 bucket and object key validation
-   - Image format validation
+4. **堅牢な検証**:
+   - XSS攻撃を防ぐための入力サニタイズ
+   - パラメータ範囲検証
+   - S3バケットとオブジェクトキーの検証
+   - 画像フォーマット検証
 
-5. **Improved Security**:
-   - Constant-time signature comparison
-   - Comprehensive security headers
-   - Input sanitization and validation
+5. **セキュリティの向上**:
+   - 一定時間署名比較
+   - 包括的なセキュリティヘッダー
+   - 入力サニタイズと検証
 
-6. **Better Observability**:
-   - Structured JSON logging
-   - Configurable log levels
-   - Performance metrics and timing
-   - Detailed error context
+6. **可観測性の向上**:
+   - 構造化JSONログ
+   - 設定可能なログレベル
+   - パフォーマンスメトリクスとタイミング
+   - 詳細なエラーコンテキスト
 
-### Development Workflow
+### 開発ワークフロー
 
-1. TypeScript source files are in `lambda/image-transform/src/`
-2. Build generates JavaScript in `lambda/image-transform/dist/`
-3. CDK bundles the dist folder for Lambda deployment
-4. Source maps are included for debugging
+1. TypeScriptソースファイルは`lambda/image-transform/src/`にあります
+2. ビルドにより`lambda/image-transform/dist/`にJavaScriptを生成
+3. CDKがLambdaデプロイ用にdistフォルダをバンドル
+4. デバッグ用にソースマップが含まれます
 
-## Cleanup
+## クリーンアップ
 
-To remove the stack and all resources:
+スタックとすべてのリソースを削除するには：
 ```bash
 npx cdk destroy
 ```
