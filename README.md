@@ -89,7 +89,7 @@ AWS CloudFrontを活用した動的画像最適化CDNソリューション
 
 #### 必須ツール
 - **Node.js**: 18.x以上（API Gatewayは22.x以上推奨）
-- **Python**: 3.11以上（S3 Object Lambdaソリューション用）
+- **Python**: 3.12以上（S3 Object Lambdaソリューション用）
 - **AWS CLI**: 設定済み（`aws configure`完了）
 - **AWS CDK CLI**: `npm install -g aws-cdk`
 
@@ -228,7 +228,7 @@ dynamic-optimization-cdn/
 │   │   ├── config.py                  # 設定管理
 │   │   ├── logger.py                  # 構造化ログ
 │   │   ├── signature_validator.py     # 署名検証
-│   │   ├── types.py                   # 型定義
+│   │   ├── models.py                   # 型定義
 │   │   ├── validators.py              # 入力検証
 │   │   ├── pyproject.toml             # Python依存関係
 │   │   ├── uv.lock                    # 依存関係ロック

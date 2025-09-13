@@ -12,7 +12,7 @@ Python Lambda function for processing images using S3 Object Lambda.
 
 ## Dependencies
 
-- Python 3.11+
+- Python 3.12+
 - Pillow (PIL) for image processing
 - boto3 for AWS SDK
 - botocore for AWS core functionality

@@ -5,13 +5,6 @@ Supports dynamic image transformation with comprehensive error handling and vali
 
 import io
 import json
-from types import (
-    AWSError,
-    ErrorResponse,
-    ImageProcessingError,
-    S3ObjectLambdaEvent,
-    TransformParams,
-)
 from typing import Any
 import urllib.request
 
@@ -20,6 +13,13 @@ from PIL import Image, ImageFilter, ImageOps
 from aws_clients import AWSClients
 from config import Config
 from logger import get_logger
+from models import (
+    AWSError,
+    ErrorResponse,
+    ImageProcessingError,
+    S3ObjectLambdaEvent,
+    TransformParams,
+)
 from signature_validator import SignatureValidator
 from validators import RequestValidator
 

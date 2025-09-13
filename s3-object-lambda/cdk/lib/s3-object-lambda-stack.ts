@@ -203,14 +203,20 @@ export class S3ObjectLambdaStack extends cdk.Stack {
       });
     }
 
-    // Lambda function for image processing
+    // Lambda function for image processing using container image
     this.imageProcessingFunction = new lambda.Function(
       this,
       "ImageProcessingLambda",
       {
-        runtime: lambda.Runtime.PYTHON_3_11,
-        handler: "index.lambda_handler",
-        code: lambda.Code.fromAsset(path.join(__dirname, "../../lambda")),
+        code: lambda.Code.fromAssetImage(path.join(__dirname, "../../lambda"), {
+          buildArgs: {
+            "--platform": "linux/amd64",
+          },
+          platform: cdk.aws_ecr_assets.Platform.LINUX_AMD64, // Without this property, Lambda will not run due to "Runtime.InvalidEntrypoint".
+        }),
+        handler: lambda.Handler.FROM_IMAGE,
+        runtime: lambda.Runtime.FROM_IMAGE,
+        architecture: lambda.Architecture.X86_64,
         timeout: cdk.Duration.seconds(Math.min(lambdaTimeout, 29)),
         memorySize: lambdaMemorySize,
         environment: {

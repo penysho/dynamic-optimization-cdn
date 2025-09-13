@@ -2,7 +2,7 @@
 
 from urllib.parse import unquote
 
-from .types import ImageProcessingError, TransformParams
+from models import ImageProcessingError, TransformParams
 
 
 class RequestValidator:

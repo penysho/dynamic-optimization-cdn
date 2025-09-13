@@ -3,9 +3,9 @@
 import boto3
 from botocore.exceptions import ClientError, NoCredentialsError
 
-from .config import Config
-from .logger import get_logger
-from .types import AWSError
+from config import Config
+from logger import get_logger
+from models import AWSError
 
 logger = get_logger(__name__)
 

@@ -109,6 +109,10 @@
     "/usr/local/lib/python3.12/site-packages",
     "scripts/.venv/lib/python3.12/site-packages"
   ],
+  "cursorpyright.analysis.extraPaths": [
+    "/usr/local/lib/python3.12/site-packages",
+    "s3-object-lambda/lambda/.venv/lib/python3.12/site-packages"
+  ],
 
   // https://qiita.com/nemutas/items/20f468bce96807d8fe3b
   // https://qiita.com/notakaos/items/9f3ee8a3f3a0caf39f7b
@@ -124,9 +128,5 @@
     "editor.codeActionsOnSave": {
       "source.organizeImports": "explicit"
     }
-  },
-  "cursorpyright.analysis.extraPaths": [
-    "/usr/local/lib/python3.11/site-packages",
-    "s3-object-lambda/lambda/.venv/lib/python3.11/site-packages"
-  ]
+  }
 }

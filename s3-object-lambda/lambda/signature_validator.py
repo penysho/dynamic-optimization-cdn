@@ -5,10 +5,10 @@ import hmac
 import time
 from urllib.parse import parse_qs, urlparse
 
-from .aws_clients import AWSClients
-from .config import Config
-from .logger import get_logger
-from .types import ImageProcessingError
+from aws_clients import AWSClients
+from config import Config
+from logger import get_logger
+from models import ImageProcessingError
 
 logger = get_logger(__name__)
 
