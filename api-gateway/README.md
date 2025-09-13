@@ -130,7 +130,7 @@ npx cdk deploy \
 
 ## 📁 プロジェクト構造
 
-```
+```plaintext
 api-gateway/
 ├── cdk/                          # AWS CDK設定
 │   ├── bin/api-gateway.ts       # CDKアプリケーションエントリーポイント
@@ -175,7 +175,7 @@ api-gateway/
 ### 基本的な画像変換
 
 クエリパラメータを使用した画像変換：
-```
+```url
 https://d123456789.cloudfront.net/my-bucket/images/photo.jpg?width=800&height=600&format=webp&quality=85
 ```
 
@@ -196,14 +196,14 @@ base64エンコードされたJSON editsオブジェクトを作成：
 ```
 
 エンコードしてURLで使用：
-```
+```url
 https://d123456789.cloudfront.net/my-bucket/images/photo.jpg?edits=ewogICJyZXNpemUiOiB7CiAgICAid2lkdGgiOiA4MDAsCiAgICAiaGVpZ2h0IjogNjAwLAogICAgImZpdCI6ICJjb3ZlciIKICB9LAogICJ3ZWJwIjogewogICAgInF1YWxpdHkiOiA4NQogIH0KfQ==
 ```
 
 ### スマートクロップの例
 
 顔検出ベースのクロップを有効化：
-```
+```url
 https://d123456789.cloudfront.net/my-bucket/images/portrait.jpg?width=400&height=400&smartCrop=true
 ```
 
