@@ -89,6 +89,22 @@ class Config:
             else "INFO"
         )
 
+    @property
+    def quality_profile(self) -> str:
+        """Get quality profile setting."""
+        profile = self._env.get("QUALITY_PROFILE", "standard").lower()
+        return profile if profile in ["high", "standard", "optimized"] else "standard"
+
+    @property
+    def enable_dynamic_quality(self) -> bool:
+        """Check if dynamic quality adjustment is enabled."""
+        return self._env.get("ENABLE_DYNAMIC_QUALITY", "true").lower() == "true"
+
+    @property
+    def enable_progressive_jpeg(self) -> bool:
+        """Check if progressive JPEG is enabled."""
+        return self._env.get("ENABLE_PROGRESSIVE_JPEG", "true").lower() == "true"
+
     def validate(self) -> None:
         """Validate configuration.
 

@@ -20,6 +20,7 @@ from models import (
     S3ObjectLambdaEvent,
     TransformParams,
 )
+from quality_optimizer import QualityOptimizer, QualityProfile
 from signature_validator import SignatureValidator
 from validators import RequestValidator
 
@@ -33,6 +34,18 @@ config = Config()
 logger = get_logger(__name__, config.log_level)
 aws_clients = AWSClients(config)
 signature_validator = SignatureValidator(config, aws_clients)
+
+# Initialize quality optimizer with profile from config
+quality_profile_map = {
+    "high": QualityProfile.HIGH,
+    "standard": QualityProfile.STANDARD,
+    "optimized": QualityProfile.OPTIMIZED,
+}
+quality_optimizer = QualityOptimizer(
+    default_profile=quality_profile_map.get(
+        config.quality_profile, QualityProfile.STANDARD
+    )
+)
 
 # Validate configuration at startup
 try:
@@ -184,7 +197,7 @@ def fetch_and_process_image(s3_url: str, transform_params: TransformParams) -> b
 
 
 def process_image(image_bytes: bytes, transform_params: TransformParams) -> bytes:
-    """Process image based on transformation parameters.
+    """Process image with specified transformations using optimized quality settings.
 
     Args:
         image_bytes: Original image bytes
@@ -208,18 +221,23 @@ def process_image(image_bytes: bytes, transform_params: TransformParams) -> byte
         image = Image.open(io.BytesIO(image_bytes))
         original_format = image.format
         original_size = image.size
+        original_file_size = len(image_bytes)
 
         logger.debug(
             "Image opened successfully",
             format=original_format,
             mode=image.mode,
             size=original_size,
+            file_size=original_file_size,
         )
 
+        # Determine target format
+        target_format = transform_params.get("format", "jpeg").lower()
+        if target_format == "jpg":
+            target_format = "jpeg"
+
         # Convert to RGB if necessary (for JPEG output or if image has transparency)
-        if image.mode in ("RGBA", "LA", "P") and transform_params.get(
-            "format", "jpeg"
-        ).lower() in ("jpeg", "jpg"):
+        if image.mode in ("RGBA", "LA", "P") and target_format in ("jpeg", "jpg"):
             # Create white background for JPEG conversion
             rgb_image = Image.new("RGB", image.size, (255, 255, 255))
             if image.mode == "P":
@@ -232,32 +250,51 @@ def process_image(image_bytes: bytes, transform_params: TransformParams) -> byte
         # Apply transformations
         image = apply_transformations(image, transform_params)
 
-        # Save processed image
-        output_format = transform_params.get("format", "jpeg").upper()
-        if output_format == "JPG":
-            output_format = "JPEG"
+        # Determine optimal quality profile based on parameters
+        quality_profile = None
 
-        quality = transform_params.get("quality", 85)
+        # Check if profile is explicitly specified in parameters
+        if "profile" in transform_params:
+            profile_name = transform_params["profile"]
+            quality_profile = quality_profile_map.get(profile_name)
+        elif config.enable_dynamic_quality:
+            # Use dynamic profile determination if no explicit profile
+            quality_profile = quality_optimizer.determine_quality_profile_from_params(
+                transform_params
+            )
+
+        # Get optimized save arguments using the quality optimizer
+        custom_quality = transform_params.get("quality")
+        file_size_hint = original_file_size if config.enable_dynamic_quality else None
+
+        save_args = quality_optimizer.get_save_arguments(
+            target_format,
+            quality_profile=quality_profile,
+            custom_quality=custom_quality,
+            file_size_hint=file_size_hint,
+        )
+
+        # Override progressive JPEG setting based on config
+        if target_format == "jpeg" and not config.enable_progressive_jpeg:
+            save_args["progressive"] = False
 
         output_buffer = io.BytesIO()
-
-        save_args = {"format": output_format, "optimize": True}
-
-        if output_format in ("JPEG", "WEBP"):
-            save_args["quality"] = quality
-        elif output_format == "PNG":
-            # PNG doesn't use quality, but we can control compression
-            save_args["compress_level"] = 6
-
         image.save(output_buffer, **save_args)
         processed_bytes = output_buffer.getvalue()
 
+        # Log optimization details
+        actual_quality = save_args.get(
+            "quality", save_args.get("compress_level", "N/A")
+        )
+        profile_used = quality_profile.value if quality_profile else "default"
         logger.debug(
             "Image processing completed",
-            original_size=len(image_bytes),
+            original_size=original_file_size,
             processed_size=len(processed_bytes),
-            output_format=output_format,
-            quality=quality,
+            output_format=target_format.upper(),
+            quality_setting=actual_quality,
+            quality_profile=profile_used,
+            compression_ratio=f"{(1 - len(processed_bytes) / original_file_size) * 100:.1f}%",
         )
 
         return processed_bytes

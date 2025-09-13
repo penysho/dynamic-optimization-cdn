@@ -1,5 +1,6 @@
 """Validation utilities for S3 Object Lambda image processing."""
 
+from typing import ClassVar
 from urllib.parse import unquote
 
 from models import ImageProcessingError, TransformParams
@@ -9,21 +10,27 @@ class RequestValidator:
     """Request validation utilities."""
 
     # Supported image formats
-    SUPPORTED_FORMATS: set[str] = {"jpeg", "jpg", "png", "webp", "avif"}
+    SUPPORTED_FORMATS: ClassVar[set[str]] = {"jpeg", "jpg", "png", "webp", "avif"}
 
     # Maximum dimensions (security measure)
     MAX_WIDTH = 2000
     MAX_HEIGHT = 2000
 
-    # Quality range
-    MIN_QUALITY = 10
+    # Quality range - expanded to support PNG compression levels
+    MIN_QUALITY = 1
     MAX_QUALITY = 100
 
     # Rotation values
-    VALID_ROTATIONS: set[int] = {0, 90, 180, 270}
+    VALID_ROTATIONS: ClassVar[set[int]] = {0, 90, 180, 270}
 
     # Fit values
-    VALID_FIT_VALUES: set[str] = {"contain", "cover", "fill", "inside", "outside"}
+    VALID_FIT_VALUES: ClassVar[set[str]] = {
+        "contain",
+        "cover",
+        "fill",
+        "inside",
+        "outside",
+    }
 
     @staticmethod
     def parse_query_parameters(query_string: str) -> dict[str, str]:
@@ -64,8 +71,8 @@ class RequestValidator:
 
         try:
             # Width validation
-            if "w" in params:
-                width = int(params["w"])
+            if "width" in params:
+                width = int(params["width"])
                 if width <= 0:
                     raise ImageProcessingError("Width must be positive", 400)
                 if width > RequestValidator.MAX_WIDTH:
@@ -75,8 +82,8 @@ class RequestValidator:
                 validated_params["width"] = width
 
             # Height validation
-            if "h" in params:
-                height = int(params["h"])
+            if "height" in params:
+                height = int(params["height"])
                 if height <= 0:
                     raise ImageProcessingError("Height must be positive", 400)
                 if height > RequestValidator.MAX_HEIGHT:
@@ -86,8 +93,8 @@ class RequestValidator:
                 validated_params["height"] = height
 
             # Quality validation
-            if "q" in params:
-                quality = int(params["q"])
+            if "quality" in params:
+                quality = int(params["quality"])
                 if (
                     quality < RequestValidator.MIN_QUALITY
                     or quality > RequestValidator.MAX_QUALITY
@@ -99,8 +106,8 @@ class RequestValidator:
                 validated_params["quality"] = quality
 
             # Format validation
-            if "f" in params:
-                format_value = params["f"].lower()
+            if "format" in params:
+                format_value = params["format"].lower()
                 if format_value not in RequestValidator.SUPPORTED_FORMATS:
                     raise ImageProcessingError(
                         f"Unsupported format '{format_value}'. Supported formats: {', '.join(RequestValidator.SUPPORTED_FORMATS)}",
@@ -108,9 +115,19 @@ class RequestValidator:
                     )
                 validated_params["format"] = format_value
 
+            # Quality profile validation
+            if "profile" in params:
+                profile_value = params["profile"].lower()
+                if profile_value not in ["high", "standard", "optimized"]:
+                    raise ImageProcessingError(
+                        f"Invalid quality profile: {profile_value}. Must be 'high', 'standard', or 'optimized'.",
+                        400,
+                    )
+                validated_params["profile"] = profile_value
+
             # Rotation validation
-            if "r" in params:
-                rotation = int(params["r"])
+            if "rotate" in params:
+                rotation = int(params["rotate"])
                 if rotation not in RequestValidator.VALID_ROTATIONS:
                     raise ImageProcessingError(
                         f"Invalid rotation '{rotation}'. Valid values: {', '.join(map(str, RequestValidator.VALID_ROTATIONS))}",
@@ -149,7 +166,8 @@ class RequestValidator:
             # Blur validation
             if "blur" in params:
                 blur = float(params["blur"])
-                if blur < 0 or blur > 100:
+                max_blur = 100
+                if blur < 0 or blur > max_blur:
                     raise ImageProcessingError(
                         "Blur value must be between 0 and 100", 400
                     )

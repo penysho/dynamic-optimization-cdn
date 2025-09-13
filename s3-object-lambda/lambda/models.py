@@ -20,6 +20,9 @@ class Environment(TypedDict, total=False):
     CORS_ENABLED: str | None
     CORS_ORIGIN: str | None
     LOG_LEVEL: str | None
+    QUALITY_PROFILE: str | None
+    ENABLE_DYNAMIC_QUALITY: str | None
+    ENABLE_PROGRESSIVE_JPEG: str | None
 
 
 class TransformParams(TypedDict, total=False):
@@ -30,6 +33,7 @@ class TransformParams(TypedDict, total=False):
     fit: str | None  # "contain" | "cover" | "fill" | "inside" | "outside"
     format: str | None  # "jpeg" | "jpg" | "png" | "webp" | "avif"
     quality: int | None
+    profile: str | None  # "high" | "standard" | "optimized"
     rotate: int | None
     flip: bool | None
     flop: bool | None

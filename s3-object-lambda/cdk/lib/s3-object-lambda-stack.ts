@@ -390,6 +390,23 @@ export class S3ObjectLambdaStack extends cdk.Stack {
       }
     );
 
+    // Create CloudFront Function for request modification
+    const requestModifierFunction = new cloudfront.Function(
+      this,
+      "RequestModifierFunction",
+      {
+        functionName: `${this.stackName}-request-modifier`,
+        comment: "Modifies viewer requests for image transformation",
+        code: cloudfront.FunctionCode.fromFile({
+          filePath: path.join(
+            __dirname,
+            "../../cloudfront-functions/request-modifier.js"
+          ),
+        }),
+        runtime: cloudfront.FunctionRuntime.JS_2_0,
+      }
+    );
+
     // CloudFront Distribution
     // Configuring aliases for Object Lambda access points and OAC settings is not possible in L2.
     this.distribution = new cloudfront.CfnDistribution(
@@ -408,6 +425,12 @@ export class S3ObjectLambdaStack extends cdk.Stack {
             cachePolicyId: cachePolicy.cachePolicyId,
             originRequestPolicyId: originRequestPolicy.originRequestPolicyId,
             compress: true,
+            functionAssociations: [
+              {
+                eventType: "viewer-request",
+                functionArn: requestModifierFunction.functionArn,
+              },
+            ],
           },
           origins: [
             {

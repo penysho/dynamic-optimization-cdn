@@ -242,8 +242,20 @@
             </div>
 
             <div class="control-group">
-              <label for="quality">Quality (10-100)</label>
-              <input type="number" id="quality" min="10" max="100" value="85" />
+              <label for="quality">Quality (1-100)</label>
+              <input type="number" id="quality" min="1" max="100" value="85" />
+              <small>Leave empty to use optimized quality profile</small>
+            </div>
+
+            <div class="control-group">
+              <label for="quality-profile">Quality Profile</label>
+              <select id="quality-profile">
+                <option value="">Auto (Dynamic)</option>
+                <option value="high">High Quality (Best for photos)</option>
+                <option value="standard" selected>Standard (Balanced)</option>
+                <option value="optimized">Optimized (Fast delivery)</option>
+              </select>
+              <small>Profile determines format-specific quality settings</small>
             </div>
 
             <div class="control-group">
@@ -387,6 +399,7 @@
         const width = document.getElementById("width").value;
         const height = document.getElementById("height").value;
         const quality = document.getElementById("quality").value;
+        const qualityProfile = document.getElementById("quality-profile").value;
         const format = document.getElementById("format").value;
         const rotation = document.getElementById("rotation").value;
         const fit = document.getElementById("fit").value;
@@ -399,6 +412,8 @@
         if (width) params.append("w", width);
         if (height) params.append("h", height);
         if (quality && quality !== "85") params.append("q", quality);
+        if (qualityProfile && qualityProfile !== "standard")
+          params.append("profile", qualityProfile);
         if (format && format !== "jpeg") params.append("f", format);
         if (rotation) params.append("r", rotation);
         if (fit && fit !== "contain") params.append("fit", fit);
